@@ -18,6 +18,9 @@ var Organization = /** @class */ (function () {
         this.members = [];
         this.availMemberIds = idGenerator(1001, this.maxMembers); //an array of desinated ids
     }
+    Organization.prototype.getVacantMemberships = function () {
+        return this.availMemberIds;
+    };
     Organization.prototype.addMember = function (fn, ln) {
         //checks if any member ids are available
         if (this.availMemberIds.length === 0)
@@ -32,14 +35,14 @@ var Organization = /** @class */ (function () {
         this.members.push(member);
     };
     Organization.prototype.getMemberById = function (id) {
-        //calls the static method form the Members calls to fetch a member.
-        var foundMember = Member.getMemberById(id, this.members);
-        if (foundMember.length > 0)
-            return foundMember[0];
-        else
-            return "Member id number : " + id + " not found.";
+        return Member.getMemberById(id, this.members);
     };
-    Organization.prototype.removeMember = function (id) { };
+    Organization.prototype.removeMember = function (id) {
+        //restore removed members id to availMemberIds array
+        var removedMember = Member.removeMemberById(id, this.members);
+        this.availMemberIds.push(removedMember["id"]);
+        return removedMember;
+    };
     return Organization;
 }());
 var Member = /** @class */ (function () {
@@ -52,7 +55,21 @@ var Member = /** @class */ (function () {
         var foundMember = membersArr.filter(function (member) {
             return member["id"] === id;
         });
-        return foundMember;
+        //if found, returns the object in the 1 item array or string message.
+        if (foundMember.length > 0)
+            return foundMember[0];
+        else
+            return "Member id: " + id + " not found,";
+    };
+    Member.removeMemberById = function (id, membersArr) {
+        //loops over the membersArr in the organization to find id match, if found return an object containingremoved member, if not return string message.
+        for (var i = 0; i < membersArr.length; i++) {
+            if (membersArr[i]["id"] === id) {
+                var removedMember = membersArr.splice(i, 1);
+                return removedMember[0];
+            }
+        }
+        return "Unsuccessful member removal. Member id: " + id + " not found.";
     };
     return Member;
 }());
@@ -62,4 +79,6 @@ org.addMember("Mary", "Gonzalez");
 org.addMember("Jordan", "Smith");
 org.addMember("Lynn", "Reed");
 org.addMember("Marco", "Puewler");
-console.log(org.getMemberById(1003));
+console.log(org.getVacantMemberships());
+console.log(org.removeMember(1001));
+console.log(org.getVacantMemberships());
